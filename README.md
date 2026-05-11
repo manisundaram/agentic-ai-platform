@@ -154,27 +154,27 @@ This repo includes `deployment/railway.toml` and a production `Dockerfile`.
 ### Agent
 
 - `POST /agent/query`
-	- body: `query`, optional `thread_id`, optional `max_iterations`
-	- query param: `stream=true|false`
-	- returns: answer, sources, tool call trace, iteration count, LangSmith trace URL (when configured)
+  - body: `query`, optional `thread_id`, optional `max_iterations`
+  - query param: `stream=true|false`
+  - returns: answer, sources, tool call trace, iteration count, LangSmith trace URL (when configured)
 
 - `POST /agent/resume`
-	- body: `thread_id`, `human_decision` (`approve|reject|modify`), optional `modified_answer`
-	- resumes interrupted HITL execution
+  - body: `thread_id`, `human_decision` (`approve|reject|modify`), optional `modified_answer`
+  - resumes interrupted HITL execution
 
 - `GET /agent/trace/{thread_id}`
-	- returns persisted graph state snapshot for debugging
+  - returns persisted graph state snapshot for debugging
 
 ### Retrieval
 
 - `POST /retrieval/index`
-	- body: list of `{content, metadata, id?}` documents
-	- indexes into LlamaIndex + Chroma
+  - body: list of `{content, metadata, id?}` documents
+  - indexes into LlamaIndex + Chroma
 
 - `GET /retrieval/stats`
-	- returns collection/document/chunk/embedding stats
+  - returns collection/document/chunk/embedding stats
 
 ### MCP
 
 - `POST /mcp/tools/list`
-	- returns discovered MCP tools and their schemas
+  - returns discovered MCP tools and their schemas
