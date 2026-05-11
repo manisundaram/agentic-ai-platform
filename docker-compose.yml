@@ -1,0 +1,60 @@
+version: "3.9"
+
+services:
+  agentic-ai-platform:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: agentic-ai-platform
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      API_HOST: 0.0.0.0
+      API_PORT: 8000
+      VECTORSTORE_BACKEND: chroma
+      DEFAULT_COLLECTION_NAME: agentic-platform
+      CHROMA_HOST: chromadb
+      CHROMA_PORT: 8000
+    depends_on:
+      - chromadb
+      - mcp-server
+    restart: unless-stopped
+
+  mcp-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mcp-server
+    command:
+      - python
+      - -c
+      - |
+        from app.mcp.server import mcp_server
+        mcp_server.run("streamable-http")
+    ports:
+      - "8081:8000"
+    env_file:
+      - .env
+    environment:
+      API_HOST: 0.0.0.0
+      API_PORT: 8000
+      MCP_HOST: 0.0.0.0
+      MCP_PORT: 8000
+    restart: unless-stopped
+
+  chromadb:
+    image: chromadb/chroma:latest
+    container_name: chromadb
+    ports:
+      - "8001:8000"
+    volumes:
+      - chroma_data:/chroma/chroma
+    environment:
+      IS_PERSISTENT: "TRUE"
+      ANONYMIZED_TELEMETRY: "FALSE"
+    restart: unless-stopped
+
+volumes:
+  chroma_data:
