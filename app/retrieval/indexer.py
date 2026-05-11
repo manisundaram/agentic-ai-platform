@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 from collections.abc import Sequence
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -13,6 +14,9 @@ from llama_index.core.base.embeddings.base import BaseEmbedding
 from llama_index.core.node_parser import SentenceSplitter
 from llama_index.vector_stores.chroma import ChromaVectorStore
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, model_validator
+
+
+logger = logging.getLogger(__name__)
 
 
 class RetrievalConfig(BaseModel):
@@ -98,7 +102,9 @@ class LlamaIndexRetriever:
         self._index: VectorStoreIndex | None = None
 
     async def index_documents(self, docs: Sequence[Document | dict[str, Any] | str] | str | Path) -> dict[str, Any]:
+        logger.info("index_documents started")
         documents = await asyncio.to_thread(self._load_documents, docs)
+        logger.info("index_documents loaded_documents=%s", len(documents))
         for position, document in enumerate(documents, start=1):
             doc_id = document.doc_id or f"document-{len(self._source_documents) + position}"
             self._source_documents.append(
@@ -110,13 +116,16 @@ class LlamaIndexRetriever:
             )
 
         await asyncio.to_thread(self._rebuild_index)
+        logger.info("index_documents completed document_count=%s chunk_count=%s", len(self._source_documents), len(self._indexed_chunks))
         return await self.get_collection_stats()
 
     async def retrieve(self, query: str, top_k: int | None = None) -> dict[str, Any]:
         if self._index is None:
+            logger.info("retrieve called with empty index query=%s", query)
             return {"query": query, "context": "", "sources": [], "top_k": top_k or self.config.default_top_k}
 
         resolved_top_k = top_k or self.config.default_top_k
+        logger.info("retrieve started query=%s top_k=%s", query, resolved_top_k)
         retriever = self._index.as_retriever(similarity_top_k=resolved_top_k)
         nodes = await asyncio.to_thread(retriever.retrieve, query)
         sources: list[dict[str, Any]] = []
@@ -134,6 +143,7 @@ class LlamaIndexRetriever:
                 }
             )
 
+        logger.info("retrieve completed query=%s sources=%s", query, len(sources))
         return {
             "query": query,
             "context": "\n\n".join(context_parts),
@@ -184,6 +194,7 @@ class LlamaIndexRetriever:
         return loaded_documents
 
     def _rebuild_index(self) -> None:
+        logger.info("rebuild_index started collection=%s", self.config.collection_name)
         try:
             self._chroma_client.delete_collection(self.config.collection_name)
         except Exception:
@@ -216,3 +227,4 @@ class LlamaIndexRetriever:
             )
             for node in nodes
         ]
+        logger.info("rebuild_index completed chunk_count=%s", len(self._indexed_chunks))

@@ -1,9 +1,13 @@
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from typing import Any, Protocol
 
 from .state import AgentState
+
+
+logger = logging.getLogger(__name__)
 
 
 class RetrievalPort(Protocol):
@@ -34,6 +38,7 @@ def _normalize_tool_calls(tool_calls: list[dict[str, Any]] | None) -> list[dict[
 
 
 async def retrieve_context(state: AgentState, dependencies: GraphNodeDependencies) -> AgentState:
+    logger.info("retrieve_context started query=%s", state["query"])
     retrieval_result = await dependencies.retriever.retrieve(state["query"])
     tool_calls = _normalize_tool_calls(state.get("tool_calls"))
     retrieval_tool_call = {
@@ -43,6 +48,7 @@ async def retrieve_context(state: AgentState, dependencies: GraphNodeDependencie
         "sources": retrieval_result.get("sources", []),
     }
     tool_calls.append(retrieval_tool_call)
+    logger.info("retrieve_context completed query=%s sources=%s", state["query"], len(retrieval_result.get("sources", [])))
 
     return {
         **state,
@@ -52,6 +58,7 @@ async def retrieve_context(state: AgentState, dependencies: GraphNodeDependencie
 
 
 async def generate_answer(state: AgentState, dependencies: GraphNodeDependencies) -> AgentState:
+    logger.info("generate_answer started query=%s", state["query"])
     generation_result = await dependencies.generator.generate(
         query=state["query"],
         context=state.get("context", ""),
@@ -67,6 +74,7 @@ async def generate_answer(state: AgentState, dependencies: GraphNodeDependencies
 
     combined_tool_calls = _normalize_tool_calls(state.get("tool_calls"))
     combined_tool_calls.extend(generation_result.get("tool_calls", []))
+    logger.info("generate_answer completed query=%s answer_length=%s", state["query"], len(str(generation_result.get("answer", ""))))
 
     return {
         **state,
@@ -77,6 +85,7 @@ async def generate_answer(state: AgentState, dependencies: GraphNodeDependencies
 
 
 async def critique_answer(state: AgentState, dependencies: GraphNodeDependencies) -> AgentState:
+    logger.info("critique_answer started query=%s", state["query"])
     critique_result = await dependencies.critic.critique(
         query=state["query"],
         context=state.get("context", ""),
@@ -90,6 +99,12 @@ async def critique_answer(state: AgentState, dependencies: GraphNodeDependencies
             "role": "critic",
             "content": critique_result.get("feedback", ""),
         }
+    )
+    logger.info(
+        "critique_answer completed query=%s issues=%s human_review=%s",
+        state["query"],
+        critique_result.get("has_issues", False),
+        critique_result.get("requires_human_review", False),
     )
 
     return {
@@ -108,11 +123,14 @@ def should_retry(state: AgentState) -> str:
     iteration_count = int(state.get("iteration_count", 0))
     max_iterations = int(state.get("max_iterations", 1))
     if has_issues and iteration_count < max_iterations:
+        logger.info("critique requested retry iteration=%s max_iterations=%s", iteration_count, max_iterations)
         return "retry"
+    logger.info("critique completed iteration=%s max_iterations=%s", iteration_count, max_iterations)
     return "done"
 
 
 def human_review_check(state: AgentState) -> str:
     if bool(state.get("requires_human_review", False)):
+        logger.warning("human review required query=%s", state.get("query", ""))
         return "human_review"
     return "done"

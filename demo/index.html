@@ -1,0 +1,1771 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>IT Support AI Agent Demo</title>
+    <meta
+      name="description"
+      content="IT Support AI Agent powered by LangGraph and LangSmith. Multi-turn reasoning with human-in-the-loop (HITL) approval."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ["Inter", "system-ui", "sans-serif"],
+            },
+            colors: {
+              ink: {
+                950: "#0f1117",
+                900: "#151924",
+                850: "#181d29",
+                800: "#1a1d27",
+                700: "#2d3148",
+                600: "#404764",
+              },
+              accent: {
+                blue: "#7dd3fc",
+                cyan: "#67e8f9",
+                amber: "#fbbf24",
+                green: "#4ade80",
+                red: "#f87171",
+                purple: "#c4b5fd",
+              },
+            },
+            boxShadow: {
+              glow: "0 0 0 1px rgba(45,49,72,.9), 0 18px 50px rgba(0,0,0,.35)",
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      :root {
+        color-scheme: dark;
+      }
+
+      html,
+      body {
+        height: 100%;
+        background: #0f1117;
+        font-family: Inter, system-ui, sans-serif;
+      }
+
+      body {
+        background:
+          radial-gradient(
+            circle at top left,
+            rgba(125, 211, 252, 0.1),
+            transparent 28%
+          ),
+          radial-gradient(
+            circle at top right,
+            rgba(196, 181, 253, 0.1),
+            transparent 24%
+          ),
+          linear-gradient(180deg, #0f1117 0%, #0b0d13 100%);
+      }
+
+      .panel {
+        background: linear-gradient(
+          180deg,
+          rgba(26, 29, 39, 0.95),
+          rgba(21, 25, 36, 0.96)
+        );
+        border: 1px solid #2d3148;
+        box-shadow: 0 18px 50px rgba(0, 0, 0, 0.25);
+      }
+
+      .panel-compact {
+        background: rgba(26, 29, 39, 0.82);
+        border: 1px solid #2d3148;
+      }
+
+      .subtle-scrollbar::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+      }
+
+      .subtle-scrollbar::-webkit-scrollbar-thumb {
+        background: #38405b;
+        border-radius: 999px;
+      }
+
+      .subtle-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+      }
+
+      .log-line {
+        border-left: 2px solid transparent;
+        padding-left: 0.75rem;
+        line-height: 1.4;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+
+      .log-info {
+        color: #cbd5e1;
+      }
+      .log-graph {
+        color: #7dd3fc;
+      }
+      .log-retrieval {
+        color: #c4b5fd;
+      }
+      .log-mcp {
+        color: #fdba74;
+      }
+      .log-hitl {
+        color: #fbbf24;
+        font-weight: 700;
+      }
+      .log-error {
+        color: #f87171;
+      }
+      .log-success {
+        color: #4ade80;
+      }
+
+      .node-running {
+        border-color: rgba(125, 211, 252, 0.35);
+        background: rgba(125, 211, 252, 0.06);
+      }
+
+      .node-complete {
+        border-color: rgba(74, 222, 128, 0.35);
+        background: rgba(74, 222, 128, 0.06);
+      }
+
+      .node-error {
+        border-color: rgba(248, 113, 113, 0.35);
+        background: rgba(248, 113, 113, 0.06);
+      }
+
+      .pulse-dot {
+        animation: pulse 1.4s ease-in-out infinite;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 0.35;
+          transform: scale(1);
+        }
+        50% {
+          opacity: 1;
+          transform: scale(1.1);
+        }
+      }
+
+      .slide-in {
+        transition:
+          opacity 180ms ease,
+          transform 180ms ease,
+          max-height 180ms ease;
+      }
+
+      .hidden-panel {
+        opacity: 0;
+        transform: translateY(-12px);
+        pointer-events: none;
+        max-height: 0;
+        overflow: hidden;
+      }
+
+      .visible-panel {
+        opacity: 1;
+        transform: translateY(0);
+        pointer-events: auto;
+        max-height: 460px;
+      }
+
+      .zoomable-shot {
+        cursor: zoom-in;
+      }
+    </style>
+  </head>
+  <body class="text-slate-100">
+    <div class="min-h-screen flex flex-col">
+      <header
+        class="border-b border-ink-700/80 bg-ink-950/80 backdrop-blur sticky top-0 z-20"
+      >
+        <div
+          class="max-w-[1600px] mx-auto px-5 py-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between"
+        >
+          <div>
+            <p class="text-xs uppercase tracking-[0.35em] text-slate-400">
+              agentic-ai-platform
+            </p>
+            <h1 class="text-2xl font-bold tracking-tight">
+              IT Support AI Agent
+            </h1>
+            <p class="text-sm text-slate-400 mt-1">
+              LangGraph + LangSmith | Multi-turn reasoning with
+              Human-In-The-Loop (HITL) approval
+            </p>
+          </div>
+          <div class="flex flex-wrap items-center gap-3 text-sm">
+            <span
+              class="inline-flex items-center gap-2 rounded-full border border-ink-700 bg-ink-800/70 px-3 py-1.5"
+            >
+              <span
+                id="backend-dot"
+                class="h-2.5 w-2.5 rounded-full bg-red-500"
+              ></span>
+              <span id="backend-status">Checking backend...</span>
+            </span>
+            <span
+              class="rounded-full border border-ink-700 bg-ink-800/70 px-3 py-1.5 text-slate-300"
+            >
+              Backend:
+              <span class="text-slate-100 font-medium"
+                >http://localhost:8000</span
+              >
+            </span>
+          </div>
+        </div>
+      </header>
+
+      <main class="max-w-[1600px] mx-auto w-full flex-1 px-5 py-4 space-y-4">
+        <details class="panel rounded-2xl overflow-hidden" open>
+          <summary
+            class="cursor-pointer list-none px-5 py-4 flex items-center justify-between gap-3 border-b border-ink-700/80"
+          >
+            <div>
+              <h2 class="text-lg font-semibold">Demo Recording</h2>
+              <p class="text-sm text-slate-400">
+                Collapsed by default in review mode. Includes video and
+                screenshot placeholders.
+              </p>
+            </div>
+            <span class="text-sm text-slate-400">Click to expand</span>
+          </summary>
+          <div class="p-5 grid gap-4 lg:grid-cols-3">
+            <div class="lg:col-span-1">
+              <div
+                id="video-placeholder"
+                class="zoomable-shot panel-compact rounded-2xl h-[260px] flex items-center justify-center text-center p-6 relative overflow-hidden"
+                title="Click to enlarge"
+              >
+                <div class="space-y-4">
+                  <div
+                    class="mx-auto h-16 w-16 rounded-full border border-ink-600 flex items-center justify-center bg-ink-900/60"
+                  >
+                    <span class="text-2xl">▶</span>
+                  </div>
+                  <div>
+                    <p class="font-semibold">demo-recording.mp4</p>
+                    <p class="text-sm text-slate-400 max-w-xs mx-auto">
+                      Place the file at
+                      <span class="text-slate-200"
+                        >demo/assets/demo-recording.mp4</span
+                      >
+                      and it will appear here.
+                    </p>
+                  </div>
+                </div>
+                <video
+                  id="demo-video"
+                  class="absolute inset-0 hidden h-full w-full object-cover"
+                  controls
+                  preload="metadata"
+                ></video>
+              </div>
+            </div>
+            <div class="space-y-4">
+              <div
+                id="screenshot-1"
+                class="zoomable-shot panel-compact rounded-2xl h-[260px] overflow-hidden relative flex items-center justify-center"
+                title="Click to enlarge"
+              >
+                <img
+                  alt="Screenshot placeholder 1"
+                  class="hidden h-full w-full object-cover"
+                />
+                <div class="text-center p-6">
+                  <p class="font-semibold">screenshot-1.png</p>
+                  <p class="text-sm text-slate-400">
+                    Placeholder for the first recording still.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div class="space-y-4">
+              <div
+                id="screenshot-2"
+                class="zoomable-shot panel-compact rounded-2xl h-[260px] overflow-hidden relative flex items-center justify-center"
+                title="Click to enlarge"
+              >
+                <img
+                  alt="Screenshot placeholder 2"
+                  class="hidden h-full w-full object-cover"
+                />
+                <div class="text-center p-6">
+                  <p class="font-semibold">screenshot-2.png</p>
+                  <p class="text-sm text-slate-400">
+                    Placeholder for the second recording still.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <div class="grid gap-4 xl:grid-cols-[30%_35%_35%] items-start">
+          <section class="panel rounded-2xl min-h-[760px] flex flex-col">
+            <div
+              class="px-5 py-4 border-b border-ink-700/80 flex items-center justify-between gap-3"
+            >
+              <div>
+                <h2 class="text-lg font-semibold">IT Support AI Agent</h2>
+                <p class="text-sm text-slate-400">
+                  Ask a support question, trigger tools, or surface a HITL
+                  approval.
+                </p>
+              </div>
+              <span class="text-xs uppercase tracking-[0.25em] text-slate-500"
+                >chat</span
+              >
+            </div>
+
+            <div class="p-5 space-y-4">
+              <div class="space-y-3">
+                <label
+                  for="query-input"
+                  class="text-sm font-medium text-slate-300"
+                  >Support query</label
+                >
+                <textarea
+                  id="query-input"
+                  rows="6"
+                  placeholder="Describe your IT issue..."
+                  class="w-full rounded-2xl border border-ink-700 bg-ink-900/80 px-4 py-3 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-400/40 resize-none"
+                ></textarea>
+                <div class="flex flex-wrap gap-2">
+                  <button
+                    data-scenario="1"
+                    class="scenario-btn rounded-full border border-ink-700 bg-ink-900 px-3 py-1.5 text-xs text-slate-200 hover:border-sky-400/60 hover:text-white transition"
+                  >
+                    Scenario 1
+                  </button>
+                  <button
+                    data-scenario="2"
+                    class="scenario-btn rounded-full border border-ink-700 bg-ink-900 px-3 py-1.5 text-xs text-slate-200 hover:border-amber-400/60 hover:text-white transition"
+                  >
+                    Scenario 2
+                  </button>
+                  <button
+                    data-scenario="3"
+                    class="scenario-btn rounded-full border border-ink-700 bg-ink-900 px-3 py-1.5 text-xs text-slate-200 hover:border-violet-400/60 hover:text-white transition"
+                  >
+                    Scenario 3
+                  </button>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-3">
+                <button
+                  id="submit-btn"
+                  class="inline-flex items-center justify-center gap-2 rounded-xl bg-sky-500 px-4 py-2.5 text-sm font-semibold text-slate-950 hover:bg-sky-400 disabled:opacity-60 disabled:cursor-not-allowed transition"
+                >
+                  <span id="submit-label">Submit</span>
+                  <span
+                    id="submit-spinner"
+                    class="hidden h-4 w-4 animate-spin rounded-full border-2 border-slate-950 border-t-transparent"
+                  ></span>
+                </button>
+                <span class="text-xs text-slate-400"
+                  >Streaming mode: real-time updates</span
+                >
+              </div>
+            </div>
+
+            <div class="px-5 pb-5 flex-1 flex flex-col min-h-0">
+              <div class="flex items-center justify-between mb-3">
+                <h3 class="font-semibold">Conversation history</h3>
+                <button
+                  id="clear-history-btn"
+                  class="text-xs text-slate-400 hover:text-white transition"
+                >
+                  Clear
+                </button>
+              </div>
+              <div
+                id="conversation-list"
+                class="subtle-scrollbar flex-1 overflow-y-auto space-y-3 pr-1 min-h-0"
+              ></div>
+            </div>
+          </section>
+
+          <section class="panel rounded-2xl min-h-[760px] flex flex-col">
+            <div
+              class="px-5 py-4 border-b border-ink-700/80 flex items-center justify-between gap-3"
+            >
+              <div>
+                <h2 class="text-lg font-semibold">Agent Trace</h2>
+                <p class="text-sm text-slate-400">
+                  Shows LangGraph nodes, tool calls, and current state.
+                </p>
+              </div>
+              <span
+                id="current-state-chip"
+                class="rounded-full border border-ink-700 bg-ink-900/70 px-3 py-1 text-xs text-slate-300"
+                >Thinking</span
+              >
+            </div>
+
+            <div class="p-5 space-y-4 flex-1 min-h-0 overflow-hidden">
+              <div
+                id="paused-banner"
+                class="hidden rounded-2xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-amber-200"
+              >
+                ⏸ Paused — awaiting human approval
+              </div>
+
+              <div class="grid grid-cols-3 gap-3 text-xs">
+                <div
+                  class="rounded-2xl border border-ink-700 bg-ink-900/70 p-3"
+                >
+                  <div class="text-slate-500 uppercase tracking-[0.2em]">
+                    Iteration
+                  </div>
+                  <div id="iteration-count" class="mt-1 text-lg font-semibold">
+                    0/3
+                  </div>
+                </div>
+                <div
+                  class="rounded-2xl border border-ink-700 bg-ink-900/70 p-3"
+                >
+                  <div class="text-slate-500 uppercase tracking-[0.2em]">
+                    Thread
+                  </div>
+                  <div
+                    id="thread-id"
+                    class="mt-1 text-lg font-semibold truncate"
+                  >
+                    -
+                  </div>
+                </div>
+                <div
+                  class="rounded-2xl border border-ink-700 bg-ink-900/70 p-3"
+                >
+                  <div class="text-slate-500 uppercase tracking-[0.2em]">
+                    Latency
+                  </div>
+                  <div id="latency-ms" class="mt-1 text-lg font-semibold">
+                    -
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <div class="flex items-center justify-between mb-3">
+                  <h3 class="font-semibold">Visited nodes</h3>
+                  <span class="text-xs text-slate-500"
+                    >retrieve_context → generate_answer → critique_answer</span
+                  >
+                </div>
+                <div id="node-list" class="space-y-2"></div>
+              </div>
+
+              <div class="flex-1 min-h-0 flex flex-col">
+                <div class="flex items-center justify-between mb-3">
+                  <h3 class="font-semibold">Tool calls</h3>
+                  <span class="text-xs text-slate-500"
+                    >Derived from response payload</span
+                  >
+                </div>
+                <div
+                  id="tool-call-list"
+                  class="subtle-scrollbar flex-1 overflow-y-auto space-y-2 pr-1 min-h-0"
+                ></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel rounded-2xl min-h-[760px] flex flex-col">
+            <div class="border-b border-ink-700/80">
+              <div class="px-5 py-4 flex items-center justify-between gap-3">
+                <div>
+                  <h2 class="text-lg font-semibold">Backend Logs</h2>
+                  <p class="text-sm text-slate-400">
+                    Live SSE stream from /demo/logs.
+                  </p>
+                </div>
+                <div class="flex items-center gap-3">
+                  <span
+                    class="inline-flex items-center gap-2 rounded-full border border-ink-700 bg-ink-900/70 px-3 py-1.5 text-xs text-slate-300"
+                  >
+                    <span
+                      id="log-record-dot"
+                      class="h-2.5 w-2.5 rounded-full bg-red-500"
+                    ></span>
+                    <span id="log-record-label">Disconnected</span>
+                  </span>
+                  <button
+                    id="clear-logs-btn"
+                    class="text-xs text-slate-400 hover:text-white transition"
+                  >
+                    Clear
+                  </button>
+                </div>
+              </div>
+
+              <div
+                id="hitl-panel"
+                class="slide-in hidden-panel border-t border-ink-700/80 px-5 py-4 bg-amber-500/5"
+              >
+                <div
+                  class="rounded-2xl border border-amber-500/30 bg-ink-900/70 p-4 space-y-4"
+                >
+                  <div>
+                    <h3 class="font-semibold text-amber-200">
+                      Agent wants to perform a risky action:
+                    </h3>
+                    <p id="hitl-action" class="mt-2 text-sm text-slate-300">
+                      -
+                    </p>
+                  </div>
+                  <div id="hitl-modify-wrap" class="hidden space-y-2">
+                    <label
+                      for="hitl-modify-input"
+                      class="text-sm text-slate-300"
+                      >Modify action / response</label
+                    >
+                    <input
+                      id="hitl-modify-input"
+                      type="text"
+                      class="w-full rounded-xl border border-ink-700 bg-ink-950 px-4 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-400/40"
+                      placeholder="Enter modified action or safe alternative"
+                    />
+                  </div>
+                  <div class="flex flex-wrap gap-2">
+                    <button
+                      data-decision="approve"
+                      class="hitl-btn rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-emerald-950 hover:bg-emerald-400 transition"
+                    >
+                      ✓ Approve
+                    </button>
+                    <button
+                      data-decision="reject"
+                      class="hitl-btn rounded-xl bg-rose-500 px-4 py-2 text-sm font-semibold text-rose-950 hover:bg-rose-400 transition"
+                    >
+                      ✗ Reject
+                    </button>
+                    <button
+                      data-decision="modify"
+                      class="hitl-btn rounded-xl bg-amber-400 px-4 py-2 text-sm font-semibold text-amber-950 hover:bg-amber-300 transition"
+                    >
+                      ✎ Modify
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div
+              id="log-list"
+              class="subtle-scrollbar flex-1 overflow-y-auto p-5 space-y-2 text-sm font-mono min-h-0"
+            ></div>
+          </section>
+        </div>
+
+        <details class="panel rounded-2xl overflow-hidden">
+          <summary
+            class="cursor-pointer list-none px-5 py-4 flex items-center justify-between gap-3 border-b border-ink-700/80"
+          >
+            <div>
+              <h2 class="text-lg font-semibold">
+                Framework Comparison: Custom ReAct vs LangGraph
+              </h2>
+              <p class="text-sm text-slate-400">
+                A short reference for interview discussion and architecture
+                tradeoffs.
+              </p>
+            </div>
+            <span class="text-sm text-slate-400">Click to expand</span>
+          </summary>
+          <div class="p-5 space-y-4 overflow-x-auto">
+            <table
+              class="w-full min-w-[900px] border-separate border-spacing-0 text-sm"
+            >
+              <thead>
+                <tr class="text-left text-slate-400">
+                  <th class="border-b border-ink-700 px-4 py-3">Capability</th>
+                  <th class="border-b border-ink-700 px-4 py-3">
+                    agents-api (Custom ReAct)
+                  </th>
+                  <th class="border-b border-ink-700 px-4 py-3">
+                    agentic-ai-platform (LangGraph)
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="align-top">
+                <tr>
+                  <td
+                    class="border-b border-ink-800 px-4 py-3 font-medium text-slate-200"
+                  >
+                    HITL support
+                  </td>
+                  <td class="border-b border-ink-800 px-4 py-3 text-slate-300">
+                    Manual — requires custom state mgmt
+                  </td>
+                  <td class="border-b border-ink-800 px-4 py-3 text-slate-300">
+                    Native interrupt + checkpointer
+                  </td>
+                </tr>
+                <tr>
+                  <td
+                    class="border-b border-ink-800 px-4 py-3 font-medium text-slate-200"
+                  >
+                    State persistence
+                  </td>
+                  <td class="border-b border-ink-800 px-4 py-3 text-slate-300">
+                    Stateless — lost on timeout
+                  </td>
+                  <td class="border-b border-ink-800 px-4 py-3 text-slate-300">
+                    MemorySaver — survives restarts
+                  </td>
+                </tr>
+                <tr>
+                  <td
+                    class="border-b border-ink-800 px-4 py-3 font-medium text-slate-200"
+                  >
+                    Self-correction cycles
+                  </td>
+                  <td class="border-b border-ink-800 px-4 py-3 text-slate-300">
+                    Manual loop + termination logic
+                  </td>
+                  <td class="border-b border-ink-800 px-4 py-3 text-slate-300">
+                    Native conditional edges
+                  </td>
+                </tr>
+                <tr>
+                  <td
+                    class="border-b border-ink-800 px-4 py-3 font-medium text-slate-200"
+                  >
+                    Observability
+                  </td>
+                  <td class="border-b border-ink-800 px-4 py-3 text-slate-300">
+                    Custom logging only
+                  </td>
+                  <td class="border-b border-ink-800 px-4 py-3 text-slate-300">
+                    LangSmith auto-tracing
+                  </td>
+                </tr>
+                <tr>
+                  <td
+                    class="border-b border-ink-800 px-4 py-3 font-medium text-slate-200"
+                  >
+                    Multi-agent support
+                  </td>
+                  <td class="border-b border-ink-800 px-4 py-3 text-slate-300">
+                    Custom orchestration
+                  </td>
+                  <td class="border-b border-ink-800 px-4 py-3 text-slate-300">
+                    Built-in supervisor pattern
+                  </td>
+                </tr>
+                <tr>
+                  <td class="px-4 py-3 font-medium text-slate-200">
+                    Lines of orchestration code
+                  </td>
+                  <td class="px-4 py-3 text-slate-300">~180 lines</td>
+                  <td class="px-4 py-3 text-slate-300">~45 lines</td>
+                </tr>
+              </tbody>
+            </table>
+            <div>
+              <a
+                href="https://github.com/manisundaram/agents-api"
+                target="_blank"
+                rel="noreferrer"
+                class="inline-flex items-center gap-2 rounded-xl border border-ink-700 bg-ink-900 px-4 py-2 text-sm text-sky-300 hover:border-sky-400/60 hover:text-sky-200 transition"
+              >
+                View agents-api repo →
+              </a>
+            </div>
+          </div>
+        </details>
+      </main>
+    </div>
+
+    <template id="conversation-template">
+      <article
+        class="rounded-2xl border border-ink-700 bg-ink-900/70 p-4 space-y-3"
+      >
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <p class="text-xs uppercase tracking-[0.25em] text-slate-500">
+              Query
+            </p>
+            <p class="query-text mt-1 text-sm text-slate-100"></p>
+          </div>
+          <span
+            class="time-badge rounded-full border border-ink-700 bg-ink-950 px-2.5 py-1 text-[11px] text-slate-400"
+          ></span>
+        </div>
+        <div>
+          <p class="text-xs uppercase tracking-[0.25em] text-slate-500">
+            Answer
+          </p>
+          <p class="answer-text mt-1 text-sm leading-6 text-slate-200"></p>
+        </div>
+        <div>
+          <p class="text-xs uppercase tracking-[0.25em] text-slate-500">
+            Sources cited
+          </p>
+          <div class="source-list mt-2 flex flex-wrap gap-2"></div>
+        </div>
+        <div class="trace-link-wrap hidden">
+          <p class="text-xs uppercase tracking-[0.25em] text-slate-500">
+            LangSmith trace
+          </p>
+          <a
+            class="trace-link mt-2 inline-flex items-center gap-2 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3 py-1.5 text-xs font-medium text-cyan-200 transition hover:border-cyan-400 hover:bg-cyan-500/20 hover:text-cyan-100"
+            target="_blank"
+            rel="noreferrer noopener"
+          ></a>
+        </div>
+        <div class="grid grid-cols-2 gap-2 text-xs text-slate-400">
+          <div class="rounded-xl border border-ink-800 bg-ink-950/60 px-3 py-2">
+            <span class="text-slate-500">Iterations:</span>
+            <span class="iteration-value text-slate-200"></span>
+          </div>
+          <div class="rounded-xl border border-ink-800 bg-ink-950/60 px-3 py-2">
+            <span class="text-slate-500">Time:</span>
+            <span class="duration-value text-slate-200"></span>
+          </div>
+        </div>
+      </article>
+    </template>
+
+    <template id="node-template">
+      <div class="rounded-2xl border border-ink-700 bg-ink-900/70 p-3">
+        <div class="flex items-center justify-between gap-3">
+          <div class="flex items-center gap-2">
+            <span
+              class="status-dot h-2.5 w-2.5 rounded-full bg-slate-500"
+            ></span>
+            <span class="node-name font-medium"></span>
+          </div>
+          <span class="node-duration text-xs text-slate-400">-</span>
+        </div>
+        <div
+          class="node-status mt-2 text-xs uppercase tracking-[0.2em] text-slate-500"
+        >
+          pending
+        </div>
+        <div class="node-detail mt-2 text-sm text-slate-300"></div>
+      </div>
+    </template>
+
+    <template id="tool-template">
+      <article class="rounded-2xl border border-ink-700 bg-ink-900/70 p-3">
+        <div class="flex items-center justify-between gap-3">
+          <div>
+            <p class="tool-name font-medium"></p>
+            <p class="tool-summary mt-1 text-xs text-slate-400"></p>
+          </div>
+          <span
+            class="tool-source rounded-full border border-ink-700 bg-ink-950 px-2.5 py-1 text-[11px] text-slate-400"
+          ></span>
+        </div>
+      </article>
+    </template>
+
+    <div
+      id="image-lightbox"
+      class="fixed inset-0 z-50 hidden items-center justify-center bg-black/85 p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Expanded media preview"
+    >
+      <button
+        id="lightbox-close"
+        class="absolute right-4 top-4 rounded-full border border-white/30 bg-black/50 px-3 py-1 text-sm text-white hover:bg-black/70"
+      >
+        Close
+      </button>
+      <img
+        id="lightbox-image"
+        alt="Expanded screenshot"
+        class="max-h-[90vh] max-w-[95vw] rounded-xl border border-white/20 shadow-2xl"
+      />
+      <video
+        id="lightbox-video"
+        class="hidden max-h-[90vh] max-w-[95vw] rounded-xl border border-white/20 shadow-2xl"
+        controls
+        preload="metadata"
+      ></video>
+    </div>
+
+    <script>
+      const API_BASE = "http://localhost:8000";
+      const SCENARIOS = {
+        1: "My browser keeps crashing when I open Gmail. I've tried restarting but it keeps happening. Running Chrome on Windows 11.",
+        2: "A new employee John Smith (john.smith@company.com) needs VPN access set up and their laptop enrolled in MDM. They start Monday.",
+        3: "After the network maintenance last night, three people on the marketing team can't access the shared drive. They're getting error 0x80070043. The IT team says the server is fine.",
+      };
+
+      const state = {
+        backendOnline: false,
+        logsConnected: false,
+        logs: [],
+        conversation: [],
+        currentRun: null,
+        activeThreadId: null,
+        logQueueCount: 0,
+        trace: {
+          nodes: new Map(),
+          toolCalls: [],
+          currentState: "Thinking",
+          paused: false,
+          startTime: null,
+        },
+        pendingReview: null,
+      };
+
+      const els = {
+        backendDot: document.getElementById("backend-dot"),
+        backendStatus: document.getElementById("backend-status"),
+        queryInput: document.getElementById("query-input"),
+        submitBtn: document.getElementById("submit-btn"),
+        submitLabel: document.getElementById("submit-label"),
+        submitSpinner: document.getElementById("submit-spinner"),
+        conversationList: document.getElementById("conversation-list"),
+        clearHistoryBtn: document.getElementById("clear-history-btn"),
+        nodeList: document.getElementById("node-list"),
+        toolCallList: document.getElementById("tool-call-list"),
+        currentStateChip: document.getElementById("current-state-chip"),
+        iterationCount: document.getElementById("iteration-count"),
+        threadId: document.getElementById("thread-id"),
+        latencyMs: document.getElementById("latency-ms"),
+        pausedBanner: document.getElementById("paused-banner"),
+        hitlPanel: document.getElementById("hitl-panel"),
+        hitlAction: document.getElementById("hitl-action"),
+        hitlModifyWrap: document.getElementById("hitl-modify-wrap"),
+        hitlModifyInput: document.getElementById("hitl-modify-input"),
+        logList: document.getElementById("log-list"),
+        logRecordDot: document.getElementById("log-record-dot"),
+        logRecordLabel: document.getElementById("log-record-label"),
+        clearLogsBtn: document.getElementById("clear-logs-btn"),
+        videoPlaceholder: document.getElementById("video-placeholder"),
+        demoVideo: document.getElementById("demo-video"),
+        screenshot1: document.getElementById("screenshot-1"),
+        screenshot2: document.getElementById("screenshot-2"),
+        imageLightbox: document.getElementById("image-lightbox"),
+        lightboxImage: document.getElementById("lightbox-image"),
+        lightboxVideo: document.getElementById("lightbox-video"),
+        lightboxClose: document.getElementById("lightbox-close"),
+      };
+
+      function openMediaLightbox({ src, alt, type }) {
+        if (!src) return;
+        const isVideo = type === "video";
+        els.lightboxImage.classList.toggle("hidden", isVideo);
+        els.lightboxVideo.classList.toggle("hidden", !isVideo);
+
+        if (isVideo) {
+          els.lightboxVideo.src = src;
+          els.lightboxVideo.currentTime = 0;
+          els.lightboxVideo.play().catch(() => {});
+        } else {
+          els.lightboxImage.src = src;
+          els.lightboxImage.alt = alt || "Expanded screenshot";
+        }
+
+        els.imageLightbox.classList.remove("hidden");
+        els.imageLightbox.classList.add("flex");
+      }
+
+      function closeMediaLightbox() {
+        els.imageLightbox.classList.add("hidden");
+        els.imageLightbox.classList.remove("flex");
+        els.lightboxImage.src = "";
+        els.lightboxVideo.pause();
+        els.lightboxVideo.src = "";
+      }
+
+      function nowLabel() {
+        return new Date().toLocaleTimeString([], { hour12: false });
+      }
+
+      function setBackendStatus(online, label) {
+        state.backendOnline = online;
+        els.backendDot.className = `h-2.5 w-2.5 rounded-full ${online ? "bg-emerald-400 pulse-dot" : "bg-red-500"}`;
+        els.backendStatus.textContent = label;
+      }
+
+      function setLogsStatus(connected) {
+        state.logsConnected = connected;
+        els.logRecordDot.className = `h-2.5 w-2.5 rounded-full ${connected ? "bg-rose-500 pulse-dot" : "bg-red-500"}`;
+        els.logRecordLabel.textContent = connected
+          ? "Recording"
+          : "Disconnected";
+      }
+
+      function resetTrace() {
+        state.trace.nodes = new Map([
+          [
+            "retrieve_context",
+            {
+              name: "retrieve_context",
+              status: "pending",
+              duration: null,
+              detail: "Waiting to retrieve context",
+            },
+          ],
+          [
+            "generate_answer",
+            {
+              name: "generate_answer",
+              status: "pending",
+              duration: null,
+              detail: "Waiting to generate answer",
+            },
+          ],
+          [
+            "critique_answer",
+            {
+              name: "critique_answer",
+              status: "pending",
+              duration: null,
+              detail: "Waiting to critique answer",
+            },
+          ],
+        ]);
+        state.trace.toolCalls = [];
+        state.trace.currentState = "Thinking";
+        state.trace.paused = false;
+        state.trace.startTime = performance.now();
+        renderTrace();
+      }
+
+      function updateNode(name, updates) {
+        const node = state.trace.nodes.get(name);
+        if (!node) return;
+        Object.assign(node, updates);
+        renderTrace();
+      }
+
+      function setCurrentState(label, paused = false) {
+        state.trace.currentState = label;
+        state.trace.paused = paused;
+        els.currentStateChip.textContent = label;
+        els.pausedBanner.classList.toggle("hidden", !paused);
+        if (paused) {
+          els.pausedBanner.classList.remove("hidden");
+        }
+      }
+
+      function renderTrace() {
+        const nodes = Array.from(state.trace.nodes.values());
+        els.nodeList.innerHTML = "";
+        for (const node of nodes) {
+          const template = document.getElementById("node-template");
+          const fragment = template.content.cloneNode(true);
+          const wrapper = fragment.querySelector("div");
+          const dot = fragment.querySelector(".status-dot");
+          const name = fragment.querySelector(".node-name");
+          const status = fragment.querySelector(".node-status");
+          const duration = fragment.querySelector(".node-duration");
+          const detail = fragment.querySelector(".node-detail");
+
+          name.textContent = node.name;
+          status.textContent = node.status;
+          duration.textContent =
+            node.duration == null ? "-" : `${node.duration} ms`;
+          detail.textContent = node.detail || "";
+
+          wrapper.classList.remove(
+            "node-running",
+            "node-complete",
+            "node-error",
+          );
+          if (node.status === "running") {
+            wrapper.classList.add("node-running");
+            dot.className =
+              "status-dot h-2.5 w-2.5 rounded-full bg-sky-400 pulse-dot";
+            status.classList.add("text-sky-300");
+            status.classList.remove(
+              "text-slate-500",
+              "text-emerald-300",
+              "text-rose-300",
+            );
+          } else if (node.status === "complete") {
+            wrapper.classList.add("node-complete");
+            dot.className =
+              "status-dot h-2.5 w-2.5 rounded-full bg-emerald-400";
+            status.classList.add("text-emerald-300");
+            status.classList.remove(
+              "text-slate-500",
+              "text-sky-300",
+              "text-rose-300",
+            );
+          } else if (node.status === "error") {
+            wrapper.classList.add("node-error");
+            dot.className = "status-dot h-2.5 w-2.5 rounded-full bg-rose-400";
+            status.classList.add("text-rose-300");
+            status.classList.remove(
+              "text-slate-500",
+              "text-sky-300",
+              "text-emerald-300",
+            );
+          } else {
+            dot.className = "status-dot h-2.5 w-2.5 rounded-full bg-slate-500";
+            status.className =
+              "node-status mt-2 text-xs uppercase tracking-[0.2em] text-slate-500";
+          }
+
+          els.nodeList.appendChild(fragment);
+        }
+
+        els.toolCallList.innerHTML = "";
+        if (!state.trace.toolCalls.length) {
+          els.toolCallList.innerHTML =
+            '<div class="rounded-2xl border border-dashed border-ink-700 bg-ink-900/60 p-4 text-sm text-slate-500">Tool calls will appear here after a query.</div>';
+        } else {
+          for (const tool of state.trace.toolCalls) {
+            const template = document.getElementById("tool-template");
+            const fragment = template.content.cloneNode(true);
+            fragment.querySelector(".tool-name").textContent =
+              tool.tool || tool.name || "tool";
+            fragment.querySelector(".tool-summary").textContent =
+              tool.summary || tool.input || JSON.stringify(tool).slice(0, 140);
+            fragment.querySelector(".tool-source").textContent =
+              tool.source || "internal";
+            els.toolCallList.appendChild(fragment);
+          }
+        }
+
+        els.iterationCount.textContent = `${state.currentRun?.iterationCount ?? 0}/3`;
+        els.threadId.textContent = state.activeThreadId || "-";
+        els.latencyMs.textContent =
+          state.currentRun?.durationMs != null
+            ? `${state.currentRun.durationMs} ms`
+            : "-";
+        els.currentStateChip.textContent = state.trace.currentState;
+      }
+
+      function renderConversation() {
+        els.conversationList.innerHTML = "";
+        if (!state.conversation.length) {
+          els.conversationList.innerHTML =
+            '<div class="rounded-2xl border border-dashed border-ink-700 bg-ink-900/60 p-5 text-sm text-slate-500">Run a scenario to populate the conversation history.</div>';
+          return;
+        }
+
+        for (const item of state.conversation.slice().reverse()) {
+          const template = document.getElementById("conversation-template");
+          const fragment = template.content.cloneNode(true);
+          fragment.querySelector(".query-text").textContent = item.query;
+          fragment.querySelector(".answer-text").textContent =
+            item.answer || "";
+          fragment.querySelector(".time-badge").textContent = item.timestamp;
+          fragment.querySelector(".iteration-value").textContent =
+            item.iterations;
+          fragment.querySelector(".duration-value").textContent =
+            `${item.durationMs} ms`;
+          const sourceList = fragment.querySelector(".source-list");
+          const traceWrap = fragment.querySelector(".trace-link-wrap");
+          const traceLink = fragment.querySelector(".trace-link");
+          if (item.traceUrl) {
+            traceLink.href = item.traceUrl;
+            traceLink.textContent = "Open LangSmith trace";
+            traceWrap.classList.remove("hidden");
+          }
+          if (!item.sources.length) {
+            const empty = document.createElement("span");
+            empty.className = "text-xs text-slate-500";
+            empty.textContent = "No sources returned";
+            sourceList.appendChild(empty);
+          } else {
+            for (const source of item.sources) {
+              const chip = document.createElement("span");
+              chip.className =
+                "rounded-full border border-ink-700 bg-ink-950 px-3 py-1 text-xs text-slate-300";
+              chip.textContent = source;
+              sourceList.appendChild(chip);
+            }
+          }
+          els.conversationList.appendChild(fragment);
+        }
+      }
+
+      function getLogClass(entry) {
+        const message = `${entry.message || ""}`.toLowerCase();
+        const source = `${entry.source || ""}`.toLowerCase();
+        const level = `${entry.level || ""}`.toUpperCase();
+        if (level === "ERROR") return "log-error";
+        if (
+          level === "WARNING" ||
+          source === "hitl" ||
+          /human review|awaiting approval|risk/i.test(message)
+        )
+          return "log-hitl";
+        if (
+          source === "graph" ||
+          source === "langgraph" ||
+          /retrieve_context|generate_answer|critique_answer/.test(message)
+        )
+          return "log-graph";
+        if (
+          source === "retrieval" ||
+          source === "llamaindex" ||
+          /retrieve|index|chunk|embedding/.test(message)
+        )
+          return "log-retrieval";
+        if (
+          source === "mcp" ||
+          /tool|calculate|search_documents|get_current_time/.test(message)
+        )
+          return "log-mcp";
+        if (/complete|completed|success|healthy|ok/.test(message))
+          return "log-success";
+        return "log-info";
+      }
+
+      function appendLog(entry) {
+        state.logs.push(entry);
+        if (state.logs.length > 200) {
+          state.logs.splice(0, state.logs.length - 200);
+        }
+        renderLogs();
+      }
+
+      function renderLogs() {
+        els.logList.innerHTML = "";
+        if (!state.logs.length) {
+          els.logList.innerHTML =
+            '<div class="rounded-2xl border border-dashed border-ink-700 bg-ink-900/60 p-4 text-sm text-slate-500">Live backend logs will appear here.</div>';
+          return;
+        }
+
+        for (const entry of state.logs) {
+          const line = document.createElement("div");
+          line.className = `log-line ${getLogClass(entry)}`;
+          line.textContent = `[${entry.time}] ${entry.level} ${entry.message}`;
+          els.logList.appendChild(line);
+        }
+        els.logList.scrollTop = els.logList.scrollHeight;
+      }
+
+      function inferNodeFromLog(entry) {
+        const message = `${entry.message || ""}`;
+        const lower = message.toLowerCase();
+        const now = performance.now();
+        const starts = {
+          retrieve_context: /retrieve_context started/.test(lower),
+          generate_answer: /generate_answer started/.test(lower),
+          critique_answer: /critique_answer started/.test(lower),
+        };
+        const completes = {
+          retrieve_context: /retrieve_context completed/.test(lower),
+          generate_answer: /generate_answer completed/.test(lower),
+          critique_answer: /critique_answer completed/.test(lower),
+        };
+
+        if (starts.retrieve_context) {
+          updateNode("retrieve_context", {
+            status: "running",
+            detail: "Retrieving context from LlamaIndex",
+            startedAt: now,
+          });
+          setCurrentState("Retrieving");
+        } else if (completes.retrieve_context) {
+          const node = state.trace.nodes.get("retrieve_context");
+          updateNode("retrieve_context", {
+            status: "complete",
+            duration: node?.startedAt
+              ? Math.max(1, Math.round(now - node.startedAt))
+              : (node?.duration ?? 0),
+            detail: message,
+          });
+          setCurrentState("Generating");
+        }
+
+        if (starts.generate_answer) {
+          updateNode("generate_answer", {
+            status: "running",
+            detail: "Generating answer",
+            startedAt: now,
+          });
+          setCurrentState("Generating");
+        } else if (completes.generate_answer) {
+          const node = state.trace.nodes.get("generate_answer");
+          updateNode("generate_answer", {
+            status: "complete",
+            duration: node?.startedAt
+              ? Math.max(1, Math.round(now - node.startedAt))
+              : (node?.duration ?? 0),
+            detail: message,
+          });
+          setCurrentState("Critiquing");
+        }
+
+        if (starts.critique_answer) {
+          updateNode("critique_answer", {
+            status: "running",
+            detail: "Evaluating answer quality",
+            startedAt: now,
+          });
+          setCurrentState("Critiquing");
+        } else if (completes.critique_answer) {
+          const node = state.trace.nodes.get("critique_answer");
+          updateNode("critique_answer", {
+            status: "complete",
+            duration: node?.startedAt
+              ? Math.max(1, Math.round(now - node.startedAt))
+              : (node?.duration ?? 0),
+            detail: message,
+          });
+        }
+
+        if (/human review required|awaiting human approval/i.test(message)) {
+          setCurrentState("Awaiting Approval", true);
+          state.pendingReview = {
+            actionDescription: message,
+          };
+          showHITLPanel(true);
+        }
+
+        if (/agent query completed/i.test(lower)) {
+          setCurrentState(
+            state.trace.paused ? "Awaiting Approval" : "Complete",
+            state.trace.paused,
+          );
+          if (!state.trace.paused) {
+            completeAllRunningNodes();
+          }
+        }
+      }
+
+      function completeAllRunningNodes() {
+        const now = performance.now();
+        for (const node of state.trace.nodes.values()) {
+          if (node.status === "running") {
+            updateNode(node.name, {
+              status: "complete",
+              duration: node.startedAt
+                ? Math.max(1, Math.round(now - node.startedAt))
+                : (node.duration ?? 0),
+              detail: node.detail || "Completed",
+            });
+          }
+        }
+        setCurrentState("Complete");
+      }
+
+      function showHITLPanel(visible) {
+        els.hitlPanel.classList.toggle("hidden-panel", !visible);
+        els.hitlPanel.classList.toggle("visible-panel", visible);
+        els.hitlModifyWrap.classList.add("hidden");
+        if (!visible) {
+          els.hitlModifyInput.value = "";
+        }
+      }
+
+      async function pingBackend() {
+        try {
+          const response = await fetch(`${API_BASE}/ping`);
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          setBackendStatus(true, "Connected");
+        } catch (error) {
+          setBackendStatus(false, "Disconnected");
+        }
+      }
+
+      function parseSources(payload) {
+        const rawSources = Array.isArray(payload.sources)
+          ? payload.sources
+          : [];
+        return rawSources.map((source) => {
+          const metadata = source?.metadata || {};
+          return (
+            metadata.source ||
+            metadata.document_name ||
+            metadata.file_name ||
+            source.document_id ||
+            source.chunk_id ||
+            source.id ||
+            "unknown source"
+          );
+        });
+      }
+
+      function buildToolCalls(payload) {
+        const toolCalls = Array.isArray(payload.tool_calls_made)
+          ? payload.tool_calls_made
+          : [];
+        return toolCalls.map((toolCall) => {
+          const summary = toolCall.sources
+            ? `Cited ${toolCall.sources.length} chunk(s)`
+            : toolCall.model
+              ? `Model: ${toolCall.model}`
+              : toolCall.query
+                ? `Query: ${toolCall.query}`
+                : JSON.stringify(toolCall).slice(0, 140);
+          return {
+            tool: toolCall.tool || toolCall.name || "tool",
+            source: toolCall.provider || toolCall.source || "internal",
+            input: toolCall.query || toolCall.input || JSON.stringify(toolCall),
+            summary,
+          };
+        });
+      }
+
+      async function loadTrace(threadId) {
+        const response = await fetch(
+          `${API_BASE}/agent/trace/${encodeURIComponent(threadId)}`,
+        );
+        if (!response.ok) return null;
+        return response.json();
+      }
+
+      function updateConversationWithRun(run) {
+        const existingIndex = state.conversation.findIndex(
+          (item) => item.threadId === run.threadId,
+        );
+        const entry = {
+          threadId: run.threadId,
+          query: run.query,
+          answer: run.answer,
+          sources: run.sources,
+          traceUrl: run.traceUrl || null,
+          iterations: run.iterations,
+          durationMs: run.durationMs,
+          timestamp: nowLabel(),
+        };
+        if (existingIndex >= 0) {
+          state.conversation[existingIndex] = entry;
+        } else {
+          state.conversation.push(entry);
+        }
+        renderConversation();
+      }
+
+      async function submitQuery(query) {
+        const trimmedQuery = query.trim();
+        if (!trimmedQuery) return;
+
+        const threadId = `demo-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
+        state.activeThreadId = threadId;
+        state.currentRun = null;
+        resetTrace();
+        setCurrentState("Thinking");
+        els.threadId.textContent = threadId;
+        els.latencyMs.textContent = "...";
+        els.submitBtn.disabled = true;
+        els.submitSpinner.classList.remove("hidden");
+        els.submitLabel.textContent = "Working";
+        showHITLPanel(false);
+
+        const startedAt = performance.now();
+        const payload = {
+          query: trimmedQuery,
+          thread_id: threadId,
+          max_iterations: 3,
+        };
+        appendLog({
+          time: nowLabel(),
+          level: "INFO",
+          source: "app",
+          message: `Submitting query thread_id=${threadId}`,
+        });
+
+        try {
+          const response = await fetch(`${API_BASE}/agent/query?stream=true`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(errorText || `HTTP ${response.status}`);
+          }
+
+          let result = {};
+          const reader = response.body.getReader();
+          const decoder = new TextDecoder();
+          const lines = [];
+
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            const chunk = decoder.decode(value);
+            lines.push(...chunk.split("\n"));
+          }
+
+          for (const line of lines) {
+            if (!line.trim()) continue;
+            try {
+              const parsed = JSON.parse(line);
+              if (parsed.event === "final" && parsed.data) {
+                result = parsed.data;
+              } else if (parsed.event === "state") {
+                setCurrentState("Processing...");
+                els.iterationCount.textContent = `${parsed.iteration_count}/${payload.max_iterations}`;
+              }
+            } catch (e) {
+              // Skip non-JSON lines (keep-alive, etc)
+            }
+          }
+          const trace = await loadTrace(threadId).catch(() => null);
+          const durationMs = Math.max(
+            1,
+            Math.round(performance.now() - startedAt),
+          );
+          const sources = parseSources(result);
+          const toolCalls = buildToolCalls(result);
+          const traceUrl = result.langsmith_trace_url || null;
+          state.trace.toolCalls = toolCalls;
+          state.currentRun = {
+            threadId,
+            query: trimmedQuery,
+            answer: result.answer || "",
+            sources,
+            iterationCount: result.iteration_count || 0,
+            traceUrl,
+            durationMs,
+          };
+          renderTrace();
+
+          const paused = Boolean(trace?.values?.requires_human_review);
+          if (paused) {
+            const actionDescription =
+              trace?.values?.critique_feedback ||
+              "Awaiting review for a risky IT action.";
+            state.pendingReview = {
+              threadId,
+              actionDescription,
+              query: trimmedQuery,
+              lastAnswer: result.answer || "",
+            };
+            els.hitlAction.textContent = actionDescription;
+            showHITLPanel(true);
+            setCurrentState("Awaiting Approval", true);
+            appendLog({
+              time: nowLabel(),
+              level: "WARNING",
+              source: "hitl",
+              message: `Human approval required thread_id=${threadId}`,
+            });
+          } else {
+            showHITLPanel(false);
+            setCurrentState("Complete");
+            completeAllRunningNodes();
+          }
+
+          updateConversationWithRun({
+            threadId,
+            query: trimmedQuery,
+            answer: result.answer || "",
+            sources,
+            traceUrl,
+            iterations: result.iteration_count || 0,
+            durationMs,
+          });
+
+          if (trace?.values?.iteration_count != null) {
+            els.iterationCount.textContent = `${trace.values.iteration_count}/3`;
+          } else {
+            els.iterationCount.textContent = `${result.iteration_count || 0}/3`;
+          }
+        } catch (error) {
+          setCurrentState("Error");
+          appendLog({
+            time: nowLabel(),
+            level: "ERROR",
+            source: "app",
+            message: `Query failed: ${error.message || error}`,
+          });
+          const failureCard = {
+            threadId,
+            query: trimmedQuery,
+            answer: `Error: ${error.message || error}`,
+            sources: [],
+            traceUrl: null,
+            iterations: 0,
+            durationMs: Math.max(1, Math.round(performance.now() - startedAt)),
+          };
+          updateConversationWithRun(failureCard);
+        } finally {
+          els.submitBtn.disabled = false;
+          els.submitSpinner.classList.add("hidden");
+          els.submitLabel.textContent = "Submit";
+          els.latencyMs.textContent = state.currentRun?.durationMs
+            ? `${state.currentRun.durationMs} ms`
+            : "-";
+        }
+      }
+
+      async function handleHITLDecision(decision) {
+        if (!state.pendingReview?.threadId) return;
+        const threadId = state.pendingReview.threadId;
+        const payload = {
+          thread_id: threadId,
+          human_decision: decision,
+        };
+        if (decision === "modify") {
+          const modified = els.hitlModifyInput.value.trim();
+          if (!modified) {
+            els.hitlModifyInput.focus();
+            return;
+          }
+          payload.modified_answer = modified;
+        }
+
+        els.submitBtn.disabled = true;
+        try {
+          const response = await fetch(`${API_BASE}/agent/resume`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(errorText || `HTTP ${response.status}`);
+          }
+          const result = await response.json();
+          const trace = await loadTrace(threadId).catch(() => null);
+          const traceUrl = result.langsmith_trace_url || null;
+          state.currentRun = {
+            threadId,
+            query: state.pendingReview.query,
+            answer: result.answer || "",
+            sources: parseSources(result),
+            iterationCount: result.iteration_count || 0,
+            traceUrl,
+            durationMs: state.currentRun?.durationMs || 0,
+          };
+          state.trace.toolCalls = buildToolCalls(result);
+          updateConversationWithRun({
+            threadId,
+            query: state.pendingReview.query,
+            answer: result.answer || "",
+            sources: parseSources(result),
+            traceUrl,
+            iterations: result.iteration_count || 0,
+            durationMs: state.currentRun?.durationMs || 0,
+          });
+          renderTrace();
+          appendLog({
+            time: nowLabel(),
+            level: "INFO",
+            source: "hitl",
+            message: `Human decision applied thread_id=${threadId} decision=${decision}`,
+          });
+          setCurrentState("Complete");
+          els.hitlAction.textContent = "-";
+          els.hitlModifyInput.value = "";
+          showHITLPanel(false);
+          if (trace?.values?.requires_human_review) {
+            setCurrentState("Awaiting Approval", true);
+            showHITLPanel(true);
+          }
+        } catch (error) {
+          appendLog({
+            time: nowLabel(),
+            level: "ERROR",
+            source: "app",
+            message: `Resume failed: ${error.message || error}`,
+          });
+        } finally {
+          els.submitBtn.disabled = false;
+        }
+      }
+
+      function connectLogs() {
+        try {
+          const source = new EventSource(`${API_BASE}/demo/logs`);
+          setLogsStatus(false);
+
+          source.onopen = () => {
+            setLogsStatus(true);
+            appendLog({
+              time: nowLabel(),
+              level: "INFO",
+              source: "server",
+              message: "SSE log stream connected",
+            });
+          };
+
+          source.onmessage = (event) => {
+            try {
+              const entry = JSON.parse(event.data);
+              appendLog(entry);
+              inferNodeFromLog(entry);
+            } catch (error) {
+              appendLog({
+                time: nowLabel(),
+                level: "ERROR",
+                source: "app",
+                message: `Unable to parse log event: ${error.message || error}`,
+              });
+            }
+          };
+
+          source.onerror = () => {
+            setLogsStatus(false);
+          };
+        } catch (error) {
+          setLogsStatus(false);
+        }
+      }
+
+      async function detectAsset(url, onLoad, onMissing) {
+        const img = new Image();
+        img.onload = () => onLoad(img);
+        img.onerror = () => onMissing();
+        img.src = url;
+      }
+
+      async function initAssets() {
+        const video = els.demoVideo;
+        video.src = "assets/demo-recording.mp4";
+        video.addEventListener("loadedmetadata", () => {
+          els.videoPlaceholder.classList.add("border-emerald-400/30");
+          video.classList.remove("hidden");
+        });
+        video.addEventListener("error", () => {
+          video.classList.add("hidden");
+        });
+
+        detectAsset(
+          "assets/screenshot-1.png",
+          (img) => {
+            const holder = els.screenshot1;
+            const imageElement = holder.querySelector("img");
+            imageElement.src = img.src;
+            imageElement.classList.remove("hidden");
+            holder.querySelector("div").classList.add("hidden");
+          },
+          () => {},
+        );
+
+        detectAsset(
+          "assets/screenshot-2.png",
+          (img) => {
+            const holder = els.screenshot2;
+            const imageElement = holder.querySelector("img");
+            imageElement.src = img.src;
+            imageElement.classList.remove("hidden");
+            holder.querySelector("div").classList.add("hidden");
+          },
+          () => {},
+        );
+      }
+
+      function wireEvents() {
+        document.querySelectorAll(".scenario-btn").forEach((button) => {
+          button.addEventListener("click", () => {
+            const scenario = button.getAttribute("data-scenario");
+            els.queryInput.value = SCENARIOS[scenario] || "";
+            els.queryInput.focus();
+          });
+        });
+
+        els.submitBtn.addEventListener("click", () =>
+          submitQuery(els.queryInput.value),
+        );
+        els.queryInput.addEventListener("keydown", (event) => {
+          if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
+            event.preventDefault();
+            submitQuery(els.queryInput.value);
+          }
+        });
+
+        els.clearLogsBtn.addEventListener("click", () => {
+          state.logs = [];
+          renderLogs();
+        });
+
+        els.clearHistoryBtn.addEventListener("click", () => {
+          state.conversation = [];
+          renderConversation();
+        });
+
+        [els.screenshot1, els.screenshot2].forEach((holder) => {
+          holder.addEventListener("click", () => {
+            const imageElement = holder.querySelector("img");
+            if (!imageElement || imageElement.classList.contains("hidden")) {
+              return;
+            }
+            openMediaLightbox({
+              src: imageElement.src,
+              alt: imageElement.alt,
+              type: "image",
+            });
+          });
+        });
+
+        els.videoPlaceholder.addEventListener("click", () => {
+          const video = els.demoVideo;
+          if (!video || video.classList.contains("hidden") || !video.src) {
+            return;
+          }
+          openMediaLightbox({ src: video.src, type: "video" });
+        });
+
+        els.lightboxClose.addEventListener("click", closeMediaLightbox);
+        els.imageLightbox.addEventListener("click", (event) => {
+          if (event.target === els.imageLightbox) {
+            closeMediaLightbox();
+          }
+        });
+
+        document.addEventListener("keydown", (event) => {
+          if (
+            event.key === "Escape" &&
+            !els.imageLightbox.classList.contains("hidden")
+          ) {
+            closeMediaLightbox();
+          }
+        });
+
+        document.querySelectorAll(".hitl-btn").forEach((button) => {
+          button.addEventListener("click", () => {
+            const decision = button.getAttribute("data-decision");
+            if (decision === "modify") {
+              els.hitlModifyWrap.classList.remove("hidden");
+              els.hitlModifyInput.focus();
+              return;
+            }
+            handleHITLDecision(decision);
+          });
+        });
+
+        els.hitlModifyInput.addEventListener("keydown", (event) => {
+          if (event.key === "Enter") {
+            event.preventDefault();
+            handleHITLDecision("modify");
+          }
+        });
+      }
+
+      function bootstrap() {
+        renderConversation();
+        renderLogs();
+        resetTrace();
+        wireEvents();
+        initAssets();
+        pingBackend();
+        connectLogs();
+        setCurrentState("Thinking");
+        setLogsStatus(false);
+      }
+
+      bootstrap();
+    </script>
+  </body>
+</html>

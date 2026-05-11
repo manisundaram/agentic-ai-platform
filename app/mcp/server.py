@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import ast
+import logging
 import os
 import operator
 from collections.abc import Callable
@@ -13,6 +14,9 @@ from pydantic import BaseModel, ConfigDict, Field
 
 if TYPE_CHECKING:
     from app.retrieval import LlamaIndexRetriever
+
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(slots=True)
@@ -114,6 +118,7 @@ def _default_dependencies() -> MCPServerDependencies:
 
 def create_mcp_server(dependencies: MCPServerDependencies | None = None) -> FastMCP:
     resolved_dependencies = dependencies or _default_dependencies()
+    logger.info("creating MCP server")
     # MCP standardizes discovery, contracts, and invocation semantics so teams
     # can add tools without each agent stack inventing its own registration and
     # payload conventions. That matters once multiple services contribute tools.
@@ -134,7 +139,9 @@ def create_mcp_server(dependencies: MCPServerDependencies | None = None) -> Fast
         query: Annotated[str, Field(description="Natural-language query to run against indexed documents.")],
         top_k: Annotated[int, Field(description="Maximum number of source chunks to return.", ge=1, le=20)] = 3,
     ) -> SearchDocumentsResult:
+        logger.info("search_documents called query=%s top_k=%s", query, top_k)
         result = await resolved_dependencies.retriever.retrieve(query, top_k=top_k)
+        logger.info("search_documents completed query=%s sources=%s", query, len(result.get("sources", [])))
         return SearchDocumentsResult.model_validate(result)
 
     @server.tool(
@@ -148,7 +155,10 @@ def create_mcp_server(dependencies: MCPServerDependencies | None = None) -> Fast
             Field(description="Arithmetic expression using numbers, parentheses, and + - * / // % ** operators."),
         ]
     ) -> CalculationResult:
-        return CalculationResult(expression=expression, result=_evaluate_expression(expression))
+        logger.info("calculate called expression=%s", expression)
+        result = CalculationResult(expression=expression, result=_evaluate_expression(expression))
+        logger.info("calculate completed expression=%s result=%s", expression, result.result)
+        return result
 
     @server.tool(
         name="get_current_time",
@@ -156,8 +166,11 @@ def create_mcp_server(dependencies: MCPServerDependencies | None = None) -> Fast
         structured_output=True,
     )
     async def get_current_time() -> CurrentTimeResult:
+        logger.info("get_current_time called")
         current_time = resolved_dependencies.time_provider().astimezone(UTC)
-        return CurrentTimeResult(current_time=current_time.isoformat(), timezone="UTC")
+        result = CurrentTimeResult(current_time=current_time.isoformat(), timezone="UTC")
+        logger.info("get_current_time completed timezone=%s", result.timezone)
+        return result
 
     return server
 
