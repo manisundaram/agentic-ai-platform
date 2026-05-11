@@ -76,16 +76,31 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
 ## Why This Stack
 
-- LangGraph: explicit node-based workflows with retries, branching, and interrupts
-- LlamaIndex: fast retrieval iteration over document corpora
-- MCP: consistent tool discovery/invocation contracts
-- LangSmith: runtime traces for debugging and validation
+- LangGraph: explicit node-based workflows with retries, branching, and HITL interrupts
+- LlamaIndex: fast retrieval iteration with composable chunking and retriever interfaces
+- MCP: consistent tool discovery and invocation contracts across independently built tools
+- LangSmith: runtime traces attached to query responses for debugging and validation
+- Pydantic v2: type-safe API request/response models and environment-validated settings via `Field`, `field_validator`, and `AliasChoices`
 
 For side-by-side tradeoff reasoning against sibling repos, see [docs/FRAMEWORK_COMPARISON.md](docs/FRAMEWORK_COMPARISON.md).
 
+## Operational Foundation: ai-service-kit
+
+This project is built on [ai-service-kit](https://github.com/manisundaram/ai-service-kit), a shared operational library developed alongside this platform.
+
+What ai-service-kit provides to this service:
+
+- Provider abstraction: `LLMProviderFactory` and `ProviderFactory` support OpenAI, Gemini, Anthropic, Ollama, and mock providers with a consistent interface
+- Settings layer: `ServiceSettings` wraps Pydantic `BaseSettings` for environment-validated configuration with env var aliasing
+- Health and diagnostics: `/ping`, `/health`, `/diagnostics`, and `/metrics` endpoints registered via `register_operational_endpoints`
+- Structured logging: `setup_enhanced_logging` with file rotation, structured JSON output, and cloud provider fan-out (AWS, Azure, GCP, Datadog)
+- Secret masking: `masked_secret_fields()` on settings ensures credentials are never exposed in debug snapshots
+
+This separation allows ai-service-kit to be reused across all sibling repos while keeping application-specific orchestration logic clean and self-contained here.
+
 ## Related Repositories
 
-- agents-api: custom ReAct baseline used for orchestration comparison
+- [agents-api](https://github.com/manisundaram/agents-api): custom ReAct baseline used for orchestration comparison
 - semantic-search-api: raw Chroma-focused retrieval baseline
 - rag-api: complementary RAG service patterns
-- ai-service-kit: shared provider, config, and ops foundation
+- [ai-service-kit](https://github.com/manisundaram/ai-service-kit): shared provider, config, logging, and ops foundation
