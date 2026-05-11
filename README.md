@@ -8,12 +8,12 @@
 flowchart LR
 		C[Client / UI / Caller] --> API[FastAPI Service]
 
-		API --> GQ[/POST /agent/query]
-		API --> GR[/POST /agent/resume]
-		API --> GT[/GET /agent/trace/{thread_id}]
-		API --> RI[/POST /retrieval/index]
-		API --> RS[/GET /retrieval/stats]
-		API --> ML[/POST /mcp/tools/list]
+		API --> GQ["POST /agent/query"]
+		API --> GR["POST /agent/resume"]
+		API --> GT["GET /agent/trace/{thread_id}"]
+		API --> RI["POST /retrieval/index"]
+		API --> RS["GET /retrieval/stats"]
+		API --> ML["POST /mcp/tools/list"]
 
 		GQ --> LG[LangGraph Runtime]
 		GR --> LG
@@ -26,11 +26,11 @@ flowchart LR
 		MCPA --> MCPS[MCP Server]
 
 		API --> OPS[ai-service-kit Ops Scaffold]
-		OPS --> PING[/ping/]
-		OPS --> HEALTH[/health/]
-		OPS --> DIAG[/diagnostics/]
-		OPS --> METRICS[/metrics/]
-		OPS --> DEBUG[/debug/config/]
+		OPS --> PING["GET /ping"]
+		OPS --> HEALTH["GET /health"]
+		OPS --> DIAG["GET /diagnostics"]
+		OPS --> METRICS["GET /metrics"]
+		OPS --> DEBUG["GET /debug/config"]
 
 		API --> EVAL[Evaluation Runner]
 		EVAL --> RAG[RAG Evaluator]
