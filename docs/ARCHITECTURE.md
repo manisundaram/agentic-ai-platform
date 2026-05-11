@@ -10,7 +10,7 @@ flowchart LR
 
     API --> Q[POST /agent/query]
     API --> R[POST /agent/resume]
-    API --> T[GET /agent/trace/{thread_id}]
+    API --> T["GET /agent/trace/{thread_id}"]
 
     Q --> LG[LangGraph Runtime]
     R --> LG
