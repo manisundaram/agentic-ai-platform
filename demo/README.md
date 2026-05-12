@@ -36,8 +36,13 @@ Place files in `demo/assets/`:
 - `demo-recording.mp4`
 - `screenshot-1.png`
 - `screenshot-2.png`
+- `screenshot-3.png`
 
 The UI auto-detects these files and renders them when present.
+
+### Demo Use Case
+
+The current use case for "Screenshots and video demonstrate the HITL approval loop with a real VPN onboarding scenario." These demo recording and screenshots are under the assets folder
 
 ## Recommended 3-Minute Script
 
