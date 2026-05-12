@@ -74,6 +74,27 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 - Framework decision story: [docs/FRAMEWORK_COMPARISON.md](docs/FRAMEWORK_COMPARISON.md)
 - Current evaluation artifact: [evals/results/latest.json](evals/results/latest.json)
 
+## Evaluation Snapshot
+
+Latest run ([evals/results/latest.json](evals/results/latest.json), generated 2026-05-11):
+
+- Overall score: 0.613
+- RAG overall: 0.451
+- RAG metrics: faithfulness=1.00, context_precision=0.067, context_recall=0.20, answer_relevancy=0.537
+- Agent metrics: task_completion_rate=1.00, tool_call_accuracy=1.00, cycle_efficiency=1.00, hallucination_rate=0.10
+
+Why did earlier runs show 0.0 in retrieval metrics?
+
+- The vector store was empty at eval time, so retrieval had no indexed IT support context to score against.
+
+How to repopulate and rerun evals:
+
+```bash
+python -m app.evals
+```
+
+This command recursively indexes markdown docs under `data/knowledge/` into ChromaDB and then runs the full RAG + agent eval suite.
+
 ## Why This Stack
 
 - LangGraph: explicit node-based workflows with retries, branching, and HITL interrupts

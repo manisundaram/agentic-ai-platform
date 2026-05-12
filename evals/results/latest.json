@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-11T05:46:41.662314+00:00",
+  "generated_at": "2026-05-11T23:11:24.946442+00:00",
   "counts": {
     "total_cases": 15,
     "factual_retrieval": 5,
@@ -8,61 +8,51 @@
   },
   "rag": {
     "metrics": {
-      "faithfulness": 0.0,
-      "context_precision": 0.0,
-      "context_recall": 0.0,
-      "answer_relevancy": 0.0
+      "faithfulness": 1.0,
+      "context_precision": 0.06666666666666667,
+      "context_recall": 0.2,
+      "answer_relevancy": 0.5366666666666666
     },
-    "overall_score": 0.0,
+    "overall_score": 0.4508333333333333,
     "failing_cases": [
       {
         "id": "fact-1",
         "query": "What does LangGraph add over a simple prompt chain?",
-        "faithfulness": 0.0,
+        "faithfulness": 1.0,
         "context_precision": 0.0,
         "context_recall": 0.0,
-        "answer_relevancy": 0.0,
-        "overall": 0.0,
-        "failing": true
-      },
-      {
-        "id": "fact-2",
-        "query": "Which vector database backend is configured by default?",
-        "faithfulness": 0.0,
-        "context_precision": 0.0,
-        "context_recall": 0.0,
-        "answer_relevancy": 0.0,
-        "overall": 0.0,
+        "answer_relevancy": 0.3333333333333333,
+        "overall": 0.3333333333333333,
         "failing": true
       },
       {
         "id": "fact-3",
         "query": "Why do teams adopt MCP instead of custom tool wiring?",
-        "faithfulness": 0.0,
+        "faithfulness": 1.0,
         "context_precision": 0.0,
         "context_recall": 0.0,
-        "answer_relevancy": 0.0,
-        "overall": 0.0,
+        "answer_relevancy": 0.3,
+        "overall": 0.325,
         "failing": true
       },
       {
         "id": "fact-4",
         "query": "What is the purpose of LangSmith tracing in this platform?",
-        "faithfulness": 0.0,
+        "faithfulness": 1.0,
         "context_precision": 0.0,
         "context_recall": 0.0,
-        "answer_relevancy": 0.0,
-        "overall": 0.0,
+        "answer_relevancy": 0.8,
+        "overall": 0.45,
         "failing": true
       },
       {
         "id": "fact-5",
         "query": "How does the project support no-credential local testing?",
-        "faithfulness": 0.0,
+        "faithfulness": 1.0,
         "context_precision": 0.0,
         "context_recall": 0.0,
-        "answer_relevancy": 0.0,
-        "overall": 0.0,
+        "answer_relevancy": 0.375,
+        "overall": 0.34375,
         "failing": true
       }
     ],
@@ -70,154 +60,154 @@
       {
         "id": "fact-1",
         "query": "What does LangGraph add over a simple prompt chain?",
-        "faithfulness": 0.0,
+        "faithfulness": 1.0,
         "context_precision": 0.0,
         "context_recall": 0.0,
-        "answer_relevancy": 0.0,
-        "overall": 0.0,
+        "answer_relevancy": 0.3333333333333333,
+        "overall": 0.3333333333333333,
         "failing": true
       },
       {
         "id": "fact-2",
         "query": "Which vector database backend is configured by default?",
-        "faithfulness": 0.0,
-        "context_precision": 0.0,
-        "context_recall": 0.0,
-        "answer_relevancy": 0.0,
-        "overall": 0.0,
-        "failing": true
+        "faithfulness": 1.0,
+        "context_precision": 0.3333333333333333,
+        "context_recall": 1.0,
+        "answer_relevancy": 0.875,
+        "overall": 0.8020833333333334,
+        "failing": false
       },
       {
         "id": "fact-3",
         "query": "Why do teams adopt MCP instead of custom tool wiring?",
-        "faithfulness": 0.0,
+        "faithfulness": 1.0,
         "context_precision": 0.0,
         "context_recall": 0.0,
-        "answer_relevancy": 0.0,
-        "overall": 0.0,
+        "answer_relevancy": 0.3,
+        "overall": 0.325,
         "failing": true
       },
       {
         "id": "fact-4",
         "query": "What is the purpose of LangSmith tracing in this platform?",
-        "faithfulness": 0.0,
+        "faithfulness": 1.0,
         "context_precision": 0.0,
         "context_recall": 0.0,
-        "answer_relevancy": 0.0,
-        "overall": 0.0,
+        "answer_relevancy": 0.8,
+        "overall": 0.45,
         "failing": true
       },
       {
         "id": "fact-5",
         "query": "How does the project support no-credential local testing?",
-        "faithfulness": 0.0,
+        "faithfulness": 1.0,
         "context_precision": 0.0,
         "context_recall": 0.0,
-        "answer_relevancy": 0.0,
-        "overall": 0.0,
+        "answer_relevancy": 0.375,
+        "overall": 0.34375,
         "failing": true
       }
     ]
   },
   "agent": {
     "metrics": {
-      "task_completion_rate": 0.0,
+      "task_completion_rate": 1.0,
       "tool_call_accuracy": 1.0,
-      "cycle_efficiency": 0.0,
-      "hallucination_rate": 1.0
+      "cycle_efficiency": 1.0,
+      "hallucination_rate": 0.1
     },
     "case_results": [
       {
         "id": "reason-1",
         "query": "Connect LangGraph checkpointing with human review requirements in one explanation.",
-        "task_completed": false,
+        "task_completed": true,
         "tool_call_accurate": true,
-        "cycle_efficient": false,
-        "hallucinated": true,
-        "iteration_count": 3
+        "cycle_efficient": true,
+        "hallucinated": false,
+        "iteration_count": 1
       },
       {
         "id": "reason-2",
         "query": "Compare why LlamaIndex is used with Chroma instead of direct Chroma-only code for this service.",
-        "task_completed": false,
+        "task_completed": true,
         "tool_call_accurate": true,
-        "cycle_efficient": false,
-        "hallucinated": true,
-        "iteration_count": 3
+        "cycle_efficient": true,
+        "hallucinated": false,
+        "iteration_count": 1
       },
       {
         "id": "reason-3",
         "query": "Explain how MCP tools and LangGraph nodes interact during an agent run.",
-        "task_completed": false,
+        "task_completed": true,
         "tool_call_accurate": true,
-        "cycle_efficient": false,
-        "hallucinated": true,
-        "iteration_count": 3
+        "cycle_efficient": true,
+        "hallucinated": false,
+        "iteration_count": 1
       },
       {
         "id": "reason-4",
         "query": "Why is evaluation required alongside tracing for production readiness?",
-        "task_completed": false,
+        "task_completed": true,
         "tool_call_accurate": true,
-        "cycle_efficient": false,
-        "hallucinated": true,
-        "iteration_count": 3
+        "cycle_efficient": true,
+        "hallucinated": false,
+        "iteration_count": 1
       },
       {
         "id": "reason-5",
         "query": "Summarize the tradeoff between deterministic mock providers and real provider validation.",
-        "task_completed": false,
+        "task_completed": true,
         "tool_call_accurate": true,
-        "cycle_efficient": false,
-        "hallucinated": true,
-        "iteration_count": 3
+        "cycle_efficient": true,
+        "hallucinated": false,
+        "iteration_count": 1
       },
       {
         "id": "edge-1",
         "query": "[EMPTY_INPUT]",
-        "task_completed": false,
+        "task_completed": true,
         "tool_call_accurate": true,
-        "cycle_efficient": false,
-        "hallucinated": true,
-        "iteration_count": 3
+        "cycle_efficient": true,
+        "hallucinated": false,
+        "iteration_count": 1
       },
       {
         "id": "edge-2",
         "query": "Tell me about the policy.",
-        "task_completed": false,
+        "task_completed": true,
         "tool_call_accurate": true,
-        "cycle_efficient": false,
-        "hallucinated": true,
-        "iteration_count": 3
+        "cycle_efficient": true,
+        "hallucinated": false,
+        "iteration_count": 1
       },
       {
         "id": "edge-3",
         "query": "Simulate retrieval failure handling behavior.",
-        "task_completed": false,
+        "task_completed": true,
         "tool_call_accurate": true,
-        "cycle_efficient": false,
-        "hallucinated": true,
-        "iteration_count": 3
+        "cycle_efficient": true,
+        "hallucinated": false,
+        "iteration_count": 1
       },
       {
         "id": "edge-4",
         "query": "Provide legal compliance advice for a contract dispute.",
-        "task_completed": false,
+        "task_completed": true,
         "tool_call_accurate": true,
-        "cycle_efficient": false,
+        "cycle_efficient": true,
         "hallucinated": true,
-        "iteration_count": 3
+        "iteration_count": 1
       },
       {
         "id": "edge-5",
         "query": "Return answer when retrieval context is empty.",
-        "task_completed": false,
+        "task_completed": true,
         "tool_call_accurate": true,
-        "cycle_efficient": false,
-        "hallucinated": true,
-        "iteration_count": 3
+        "cycle_efficient": true,
+        "hallucinated": false,
+        "iteration_count": 1
       }
     ]
   },
-  "overall_score": 0.25
+  "overall_score": 0.6129166666666667
 }
