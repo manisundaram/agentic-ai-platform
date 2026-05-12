@@ -11,12 +11,14 @@ Evaluation quantifies quality over a dataset of test cases — measuring metrics
 ## Eval Metrics
 
 **RAG metrics** (measured per factual_retrieval case):
+
 - `faithfulness`: Fraction of answer tokens that appear in the retrieved context. Measures groundedness.
 - `context_precision`: Fraction of retrieved sources that match expected sources. Measures retrieval accuracy.
 - `context_recall`: Fraction of expected source tokens covered by retrieved sources. Measures retrieval completeness.
 - `answer_relevancy`: Token overlap between query and answer. Measures topicality.
 
 **Agent metrics** (measured per multi_hop_reasoning and edge_case):
+
 - `task_completion_rate`: Fraction of cases where the answer has sufficient token overlap with the expected answer.
 - `tool_call_accuracy`: Fraction of cases where tool usage matches the `requires_tool_use` flag.
 - `cycle_efficiency`: Fraction of cases where iteration count stays within the efficiency target.

@@ -7,6 +7,7 @@ Human-In-The-Loop (HITL) is a design pattern where an agent pauses execution and
 LangGraph's `interrupt_before` parameter on the `human_review` node causes the graph executor to stop before entering that node. The graph state is persisted via the `MemorySaver` checkpointer so no work is lost.
 
 The run is paused in a way that:
+
 1. The client receives a response with `requires_human_review=True`.
 2. The thread's state remains stored in the checkpointer under its `thread_id`.
 3. A human can inspect the pending action and call `POST /agent/resume` with a decision of `approve`, `reject`, or `modify`.
@@ -15,6 +16,7 @@ The run is paused in a way that:
 ## Checkpointing Enables Safe HITL
 
 Without checkpointing, an interrupt would lose all in-progress state. LangGraph's `MemorySaver` checkpointer ensures:
+
 - State is preserved across the pause boundary.
 - The graph can resume from exactly the interrupted node.
 - Multiple concurrent threads can each be paused independently.

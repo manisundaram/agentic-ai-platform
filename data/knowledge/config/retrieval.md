@@ -8,17 +8,18 @@ The default vector backend is Chroma. ChromaDB is used as the vector store for a
 
 ## Configuration Parameters
 
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| `collection_name` | `"default"` | ChromaDB collection name |
-| `persist_dir` | `None` | Path for persistent storage; `None` = ephemeral |
-| `chunk_size` | `512` | Token size per chunk |
-| `chunk_overlap` | `64` | Token overlap between adjacent chunks |
-| `default_top_k` | `3` | Number of chunks returned per query |
+| Parameter         | Default     | Description                                     |
+| ----------------- | ----------- | ----------------------------------------------- |
+| `collection_name` | `"default"` | ChromaDB collection name                        |
+| `persist_dir`     | `None`      | Path for persistent storage; `None` = ephemeral |
+| `chunk_size`      | `512`       | Token size per chunk                            |
+| `chunk_overlap`   | `64`        | Token overlap between adjacent chunks           |
+| `default_top_k`   | `3`         | Number of chunks returned per query             |
 
 ## Indexing Documents
 
 Documents can be indexed via:
+
 - `POST /retrieval/index` with a JSON body containing a `documents` array.
 - Direct call to `retriever.index_documents(path)` with a directory path.
 

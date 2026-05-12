@@ -24,6 +24,7 @@ This platform uses four nodes:
 ## Conditional Edges
 
 After `critique_answer`, a conditional edge decides:
+
 - If `has_issues=True` and `iteration_count < max_iterations`: loop back to `retrieve_context` for another attempt.
 - If `requires_human_review=True`: route to `human_review` interrupt node.
 - Otherwise: end the run.

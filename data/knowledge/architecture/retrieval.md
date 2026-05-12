@@ -5,6 +5,7 @@ This platform uses LlamaIndex as the retrieval abstraction layer over ChromaDB a
 ## Why LlamaIndex Over Direct ChromaDB Calls
 
 LlamaIndex accelerates:
+
 - **Document loading**: `SimpleDirectoryReader` handles multiple file formats without custom parsers.
 - **Chunking**: `SentenceSplitter` divides documents into semantically coherent chunks with configurable size and overlap.
 - **Retrieval composition**: Retriever interfaces support switching between vector search, keyword search, and hybrid modes without changing application code.
@@ -24,6 +25,7 @@ Direct ChromaDB calls remain preferable when a team needs store-specific tuning,
 ## Metadata
 
 Each retrieved chunk includes:
+
 - `chunk_id`: LlamaIndex node UUID
 - `text`: The chunk text
 - `metadata`: File path, source document name, and any custom metadata

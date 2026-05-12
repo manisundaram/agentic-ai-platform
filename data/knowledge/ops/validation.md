@@ -5,6 +5,7 @@ Validation testing confirms that the platform behaves correctly under real provi
 ## Tradeoff Between Deterministic Mocks and Real Provider Validation
 
 Mock providers improve repeatability and speed. They return deterministic outputs and require no API keys, making them ideal for CI and local development. However, mock providers cannot detect:
+
 - Prompt formatting errors that cause model refusals.
 - Token limit violations for large context windows.
 - Rate limiting behavior under load.

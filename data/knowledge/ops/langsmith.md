@@ -5,6 +5,7 @@ LangSmith is the observability platform for LangChain and LangGraph workloads. I
 ## Purpose of LangSmith Tracing in This Platform
 
 LangSmith tracing captures:
+
 - Every node execution in the LangGraph run as a named span.
 - LLM inputs (prompt messages) and outputs (completions) with token counts.
 - Tool calls and their arguments.
@@ -16,6 +17,7 @@ This makes LangSmith the primary debugging tool when a query produces an unexpec
 ## Integration
 
 Tracing is enabled via `langsmith.run_helpers.tracing_context`:
+
 ```python
 with tracing_context(project_name="agentic-ai-platform", enabled=True):
     state = await graph.ainvoke(initial_state, config=config)

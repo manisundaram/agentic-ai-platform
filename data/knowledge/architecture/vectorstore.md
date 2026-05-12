@@ -31,6 +31,7 @@ ChromaDB is ideal when simplicity and local development speed matter. For produc
 ## Collection Stats
 
 `GET /retrieval/stats` returns current collection state:
+
 ```json
 {
   "collection_name": "default",
